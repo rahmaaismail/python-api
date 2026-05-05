@@ -1,9 +1,14 @@
 import requests
 
-base_url = 'http://127.0.0.1:5000/uppercase'
+base_url = 'https://ri-book-review-api.onrender.com/process'
 
-params = {'text': 'hello world'}
+params = {
+    'text': 'hello world',
+    'duplication_factor': 2,
+    'capitalization': 'UPPER'
+}
 
-response = requests.get(base_url, params = params)
+response = requests.get(base_url, params=params)
 
-print(response)
+print(response.status_code)
+print(response.json())
