@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, request
 from flask_restful import Api, Resource
 from flasgger import Swagger
 
@@ -8,130 +8,178 @@ app = Flask(__name__)
 api = Api(app)
 swagger = Swagger(app)
 
+br = book_review.BookReview()
+
+# POST REVIEW
+class PostReview(Resource):
+    def post(self):
+        """
+        Add a new book review.
+        ---
+        tags:
+          - Book Reviews
+        parameters:
+          - in: body
+            name: body
+            required: true
+            schema:
+              type: object
+              required:
+                - book
+                - rating
+              properties:
+                book:
+                  type: string
+                rating:
+                  type: integer
+                notes:
+                  type: string
+        responses:
+          201:
+            description: Review added
+          400:
+            description: Bad request
+        """
+
+        data = request.get_json()
+
+        if not data:
+            return {"error": "JSON body required"}, 400
+
+        book = data.get("book")
+        rating = data.get("rating")
+        notes = data.get("notes", "")
+
+        if book is None or rating is None:
+            return {"error": "'book' and 'rating' are required"}, 400
+
+        br.add_book_rating(book, rating, notes)
+
+        return {"message": "Book review added successfully"}, 201
+
+# GET ALL REVIEWS
+class AllReviews(Resource):
+    def get(self):
+        """
+        Retrieve all book reviews.
+        ---
+        tags:
+          - Book Reviews
+        parameters:
+          - name: sort
+            in: query
+            type: string
+            required: false
+            enum: [ASC, DESC]
+          - name: max_records
+            in: query
+            type: integer
+            required: false
+        responses:
+          200:
+            description: Success
+        """
+
+        sort = request.args.get("sort")
+        max_records = request.args.get("max_records", default=10)
+
+        try:
+            max_records = int(max_records)
+        except ValueError:
+            return {"error": "max_records must be an integer"}, 400
+
+        if sort and sort not in ["ASC", "DESC"]:
+            return {"error": "sort must be ASC or DESC"}, 400
+
+        if sort == "ASC":
+            data = br.get_book_ratings(sort="ASC", max_records=max_records)
+        elif sort == "DESC":
+            data = br.get_book_ratings(sort="DESC", max_records=max_records)
+        else:
+            data = br.get_book_ratings(max_records=max_records)
+
+        return data, 200
+
+# UPPERCASE TEXT
 class UppercaseText(Resource):
     def get(self):
         """
-        This method responds to the GET request for this endpoint and returns the data in uppercase.
+        Convert text to uppercase.
         ---
         tags:
-        - Text Processing
+          - Text Processing
         parameters:
-            - name: text
-              in: query
-              type: string
-              required: true
-              description: The text to be converted to uppercase
+          - name: text
+            in: query
+            type: string
+            required: true
         responses:
-            200:
-                description: A successful GET request
-                content:
-                    application/json:
-                      schema:
-                        type: object
-                        properties:
-                            text:
-                                type: string
-                                description: The text in uppercase
+          200:
+            description: Success
         """
-        text = request.args.get('text')
 
-        return jsonify({"text": text.upper()})
-    
-class Records(Resource):
+        text = request.args.get("text")
+
+        if not text:
+            return {"error": "text is required"}, 400
+
+        return {"text": text.upper()}, 200
+
+# PROCESS TEXT
+class ProcessText(Resource):
     def get(self):
         """
-        This method responds to the GET request for returning a number of books.
+        Process text.
         ---
         tags:
-        - Records
+          - Text Processing
         parameters:
-            - name: count
-              in: query
-              type: integer
-              required: false
-              description: The number of books to return
-            - name: sort
-              in: query
-              type: string
-              enum: ['ASC', 'DESC']
-              required: false
-              description: Sort order for the books
+          - name: text
+            in: query
+            type: string
+            required: true
+          - name: duplication_factor
+            in: query
+            type: integer
+            required: false
+          - name: capitalization
+            in: query
+            type: string
+            enum: [UPPER, LOWER, NONE]
         responses:
-            200:
-                description: A successful GET request
-                schema:
-                    type: object
-                    properties:
-                        books:
-                            type: array
-                            items:
-                                type: object
-                                properties:
-                                    title:
-                                        type: string
-                                        description: The title of the book
-                                    author:
-                                        type: string
-                                        description: The author of the book
+          200:
+            description: Success
         """
 
-        count = request.args.get('count')  # Default to returning 10 books if count is not provided
-        sort = request.args.get('sort')
+        text = request.args.get("text")
+        duplication_factor = request.args.get("duplication_factor", default=1)
+        capitalization = request.args.get("capitalization")
 
-        # Get all the books
-        books = book_review.get_all_records(count=count, sort=sort)
+        if not text:
+            return {"error": "text is required"}, 400
 
-        return {"books": books}, 200
-    
-class AddRecord(Resource):
-    def post(self):
-        """
-        This method responds to the POST request for adding a new record to the DB table.
-        ---
-        tags:
-        - Records
-        parameters:
-            - in: body
-              name: body
-              required: true
-              schema:
-                id: BookReview
-                required:
-                  - Book
-                  - Rating
-                properties:
-                  Book:
-                    type: string
-                    description: the name of the book
-                  Rating:
-                    type: integer
-                    description: the rating of the book (1-10)
-        responses:
-            200:
-                description: A successful POST request
-            400: 
-                description: Bad request, missing 'Book' or 'Rating' in the request body
-        """
+        try:
+            duplication_factor = int(duplication_factor)
+        except ValueError:
+            return {"error": "duplication_factor must be an integer"}, 400
 
-        data = request.json
-        print(data)
+        if capitalization:
+            capitalization = capitalization.upper()
+            if capitalization == "UPPER":
+                text = text.upper()
+            elif capitalization == "LOWER":
+                text = text.lower()
+            elif capitalization != "NONE":
+                return {"error": "capitalization must be UPPER, LOWER, or NONE"}, 400
 
-        # Check if 'Book' and 'Rating' are present in the request body
-        if 'Book' not in data or 'Rating' not in data:
-            return {"message": "Bad request, missing 'Book' or 'Rating' in the request body"}, 400
-        # Call the add_record function to add the record to the DB table
-        success = book_review.add_record(data)
+        return {"text": text * duplication_factor}, 200
 
-        if success:
-            return {"message": "Record added successfully"}, 200
-        else:
-            return {"message": "Failed to add record"}, 500
-        
-
-
-api.add_resource(AddRecord, "/add-record")
-api.add_resource(Records, "/records")
+# ROUTES
+api.add_resource(PostReview, "/reviews")
+api.add_resource(AllReviews, "/all_reviews")
+api.add_resource(ProcessText, "/process")
 api.add_resource(UppercaseText, "/uppercase")
+
 
 if __name__ == "__main__":
     app.run(debug=True)

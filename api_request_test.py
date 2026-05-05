@@ -1,14 +1,10 @@
 import requests
 
-base_url = 'https://ri-book-review-api.onrender.com/process'
+# base_url = 'https://ri-book-review-api.onrender.com/process_text'
+base_url = 'http://127.0.0.1:5000/reviews'
 
-params = {
-    'text': 'hello world',
-    'duplication_factor': 2,
-    'capitalization': 'UPPER'
-}
+body = {'book': 'Matilda', 'rating': 9}
 
-response = requests.get(base_url, params=params)
+response = requests.post(base_url, json=body)
 
-print(response.status_code)
 print(response.json())
