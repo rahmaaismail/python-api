@@ -6,6 +6,9 @@ Live API:
 https://ri-book-review-api.onrender.com
 
 ---
+## 📸 API Demo
+
+![Swagger UI](images/swagger_screenshot.png)
 
 ## 🚀 Overview
 
