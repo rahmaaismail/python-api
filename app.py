@@ -175,7 +175,7 @@ class ProcessText(Resource):
         return {"text": text * duplication_factor}, 200
 
 # ROUTES
-api.add_resource(PostReview, "/reviews")
+api.add_resource(PostReview, "/review")
 api.add_resource(AllReviews, "/all_reviews")
 api.add_resource(ProcessText, "/process")
 api.add_resource(UppercaseText, "/uppercase")
