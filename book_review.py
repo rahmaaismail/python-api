@@ -1,54 +1,28 @@
-import os 
+import os
 from pyairtable import Api
 
-API_TOKEN = os.environ.get('AIRTABLE_TOKEN')
+class BookReview:
+    def __init__(self):
+        self.api = Api(os.environ['AIRTABLE'])
+        self.table = self.api.table('appw6GK8gy1eD3GRv', 'tblJKS4QesCeH4B9n')
 
-BASE_ID = 'appi1uzlLKn1TEKSw'
-TABLE_ID = 'tblvMMAVHo901m2Ra'
+    def get_book_ratings(self, sort=None, max_records=10):
 
-api = Api(API_TOKEN)
+        params = {"max_records": max_records}
 
-table = api.table(BASE_ID, TABLE_ID)
+        if sort == "ASC":
+            params["sort"] = ["Rating"]
+        elif sort == "DESC":
+            params["sort"] = ["-Rating"]
 
-def get_all_records(count=None, sort=None):
-    sort_param = []
-    if sort and sort.upper()=='DESC':
-        sort_param = ['-Rating']
-    elif sort and sort.upper()=='ASC':
-        sort_param = ['Rating']
+        return self.table.all(**params)
 
-    return table.all(max_records=count, sort=sort_param)
+    def add_book_rating(self, book_title, book_rating, notes = None):
+        fields = {'Book': book_title, 'Rating': book_rating, 'Notes': notes}
+        self.table.create(fields=fields)
 
-def get_record_id(name):
-    return table.first(formula=f"Book='{name}'")['id']
-
-def update_record(record_id, data):
-    table.update(record_id, data)
-
-    return True
-
-def add_record(data):
-    # require data contains a "Book" key and a "Rating" key (data is a dict)
-    if 'Book' not in data or 'Rating' not in data:
-        return False
-
-    table.create(data)
-    return True
 
 if __name__ == '__main__':
-    ## Show getting certain records
-    print("Show getting certain records")
-    print(table.all(formula="Rating < 5", sort=['-Rating']))
-
-    ## Show getting a single record
-    print("Show getting a single record")
-
-    # Replace a record
-    print("Replace a record")
-    name = "Test Message"
-    record_id = table.first(formula=f"Book='{name}'")['id']
-    table.update(record_id, {"Rating": 5})
-
-    ## Show all records
-    print("All records!")
-    print(table.all())
+    br = BookReview()
+    get_book_ratings = br.get_book_ratings(sort="DESC", max_records = 1)
+    print(get_book_ratings)
