@@ -1,14 +1,15 @@
 # 📚 Book Review API
 
+![API Preview](images/swagger_screenshot.png)
+
 A RESTful Book Review API built with Flask, Flask-RESTful, and Flasgger, using Airtable as a lightweight database and deployed on Render.
 
-Live API:  
-https://ri-book-review-api.onrender.com/apidocs
-
 ---
-## 📸 API
 
-![Swagger UI](swagger_screenshot.png)
+## 🔗 Live API
+
+Swagger Documentation:  
+https://ri-book-review-api.onrender.com/apidocs
 
 ## 🚀 Overview
 
